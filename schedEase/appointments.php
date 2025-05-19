@@ -1,162 +1,252 @@
 <?php
-// Database connection
-$host = 'localhost'; // Database host
-$dbname = 'sched_db'; // Database name
-$username = 'root';   // MySQL username
-$password = '';       // MySQL password (leave empty if none for root)
+session_start();
+$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 
-$mysqli = new mysqli($host, $username, $password, $dbname);
-
-// Check connection
-if ($mysqli->connect_error) {
-    die("Connection failed: " . $mysqli->connect_error);
+$conn = new mysqli("localhost", "root", "", "sched_db");
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
 
-// Fetch all appointments
-$query = "SELECT * FROM appointments ORDER BY created_at DESC"; // Order by created_at to show the latest appointments
-$result = $mysqli->query($query);
+$sql = "SELECT 
+            a.*, 
+            u.full_name AS patient_name, 
+            u.gender, 
+            TIMESTAMPDIFF(YEAR, u.dob, CURDATE()) AS age, 
+            u.dob, 
+            u.contact 
+        FROM appointments a
+        JOIN users u ON a.user_id = u.id
+        ORDER BY a.date_created DESC";
+
+$result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appointments | LebKhim's Clinic</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <title>Appointments - LebKhim's Clinic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f6f9;
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
             min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        nav {
-            width: 100%;
-            background-color: #333;
-            padding: 12px 30px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 10;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-        }
-
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin: 0 15px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        nav a:hover {
-            color: #e74c3c;
         }
 
         .container {
-            margin-top: 100px;
-            width: 96%;
-            max-width: 980px;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            box-sizing: border-box;
+            width: 95%;
+            max-width: 1400px;
+            margin: 100px auto 60px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        h1 {
+            font-size: 3rem;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
         }
 
-        table, th, td {
-            border: 1px solid #ddd;
+        .appointments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
         }
 
-        th, td {
-            padding: 12px;
-            text-align: left;
+        @media (min-width: 1200px) {
+            .appointments-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
         }
 
-        th {
-            background-color: #28a745;
+        .appointment-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-header {
+            margin-bottom: 12px;
+        }
+
+        .card-body p {
+            margin: 5px 0;
+            font-size: 1rem;
+        }
+
+        .card-actions {
+            margin-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .card-actions a {
+            flex: 1 1 48%;
+            text-align: center;
+            text-decoration: none;
+            padding: 8px 10px;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .edit-btn { background-color: #3498db; }
+        .edit-btn:hover { background-color: #2980b9; }
+
+        .view-btn { background-color: #2ecc71; }
+        .view-btn:hover { background-color: #27ae60; }
+
+        .delete-btn { background-color: #e74c3c; }
+        .delete-btn:hover { background-color: #c0392b; }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: inline-block;
             color: white;
         }
 
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
+        .status-accepted { background-color: #27ae60; }
+        .status-rejected { background-color: #e74c3c; }
+        .status-pending { background-color: #95a5a6; }
 
-        .appointment-actions a {
+        .back-home {
+            display: inline-block;
+            background-color: #e74c3c;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 10px;
             text-decoration: none;
-            color: #e74c3c;
-            font-weight: 600;
-            margin-right: 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+            margin: 50px auto 0;
+            text-align: center;
         }
 
-        .appointment-actions a:hover {
-            color: #c0392b;
+        .back-home:hover {
+            background-color: #c0392b;
+        }
+
+        @media (max-width: 768px) {
+            .card-actions a {
+                font-size: 0.85rem;
+                padding: 7px 10px;
+            }
+
+            .card-body p {
+                font-size: 0.95rem;
+            }
+        }
+
+        /* ✅ Notifier styles */
+        .notifier {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #2ecc71;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            font-weight: bold;
+            font-size: 1rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: fadeOut 4s ease forwards;
+        }
+
+        .notifier.rejected {
+            background-color: #e74c3c;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-20px); }
         }
     </style>
 </head>
 <body>
 
-<nav>
-    <a href="home.php">Home</a>
-    <a href="index.php">Book Appointment</a>
-    <a href="appointments.php">View Appointments</a>
-</nav>
-
 <div class="container">
-    <h2>Appointments</h2>
 
-    <?php
-    if ($result->num_rows > 0) {
-        // Table header
-        echo "<table>
-                <tr>
-                    <th>Full Name</th>
-                    <th>Email</th>
-                    <th>Reason</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Created At</th>
-                </tr>";
+    <!-- ✅ Notifier Section -->
+    <?php if (isset($_GET['notif'])): ?>
+        <div class="notifier <?= $_GET['notif'] === 'rejected' ? 'rejected' : '' ?>">
+            <?php if ($_GET['notif'] === 'accepted'): ?>
+                <i class="fas fa-check-circle"></i> Appointment accepted successfully!
+            <?php elseif ($_GET['notif'] === 'rejected'): ?>
+                <i class="fas fa-times-circle"></i> Appointment rejected.
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 
-        // Loop through the results and display them
-        while ($row = $result->fetch_assoc()) {
-            echo "<tr>
-                    <td>" . htmlspecialchars($row['full_name']) . "</td>
-                    <td>" . htmlspecialchars($row['email']) . "</td>
-                    <td>" . htmlspecialchars($row['reason']) . "</td>
-                    <td>" . htmlspecialchars($row['date']) . "</td>
-                    <td>" . htmlspecialchars($row['time']) . "</td>
-                    <td>" . htmlspecialchars($row['created_at']) . "</td>
-                </tr>";
-        }
+    <h1>Appointments</h1>
 
-        echo "</table>";
-    } else {
-        echo "<p>No appointments found.</p>";
-    }
+    <div class="appointments-grid">
+        <?php if ($result && $result->num_rows > 0): ?>
+            <?php while ($row = $result->fetch_assoc()): ?>
+                <?php
+                    $status = strtolower($row['status']);
+                    $badgeClass = 'status-badge ';
+                    if ($status === 'accepted') {
+                        $badgeClass .= 'status-accepted';
+                    } elseif ($status === 'rejected') {
+                        $badgeClass .= 'status-rejected';
+                    } else {
+                        $badgeClass .= 'status-pending';
+                    }
+                ?>
+                <div class="appointment-card">
+                    <div class="card-header">
+                        <span class="<?= $badgeClass ?>"><?= htmlspecialchars($row['status']) ?></span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Patient:</strong> <?= htmlspecialchars($row['patient_name']) ?></p>
+                        <p><strong>Gender:</strong> <?= htmlspecialchars($row['gender']) ?></p>
+                        <p><strong>Age:</strong> <?= htmlspecialchars($row['age']) ?></p>
+                        <p><strong>DOB:</strong> <?= htmlspecialchars($row['dob']) ?></p>
+                        <p><strong>Contact:</strong> <?= htmlspecialchars($row['contact']) ?></p>
+                        <p><strong>Date:</strong> <?= htmlspecialchars($row['date']) ?></p>
+                        <p><strong>Time:</strong> <?= date("h:i A", strtotime($row['time'])) ?></p>
+                        <p><strong>Created:</strong> <?= htmlspecialchars($row['date_created']) ?></p>
+                    </div>
+                    <div class="card-actions">
+                        <a href="edit.php?id=<?= $row['id'] ?>" class="edit-btn">Edit</a>
+                        <a href="view.php?id=<?= $row['id'] ?>" class="view-btn">View</a>
+                        <a href="delete.php?id=<?= $row['id'] ?>" class="delete-btn" onclick="return confirm('Are you sure you want to delete this appointment?')">Delete</a>
+                        <a href="update_status.php?id=<?= $row['id'] ?>&status=Accepted" class="edit-btn" onclick="return confirm('Accept this appointment?')">Accept</a>
+                        <a href="update_status.php?id=<?= $row['id'] ?>&status=Rejected" class="delete-btn" onclick="return confirm('Reject this appointment?')">Reject</a>
+                    </div>
+                </div>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <p style="text-align: center; font-size: 1.2rem;">No appointments found.</p>
+        <?php endif; ?>
+    </div>
 
-    // Close the database connection
-    $mysqli->close();
-    ?>
+    <div style="text-align: center;">
+        <a href="home.php" class="back-home">&larr; Back to Home</a>
+    </div>
 </div>
 
 </body>
 </html>
+
+<?php $conn->close(); ?>

@@ -1,286 +1,245 @@
+<?php
+$date = isset($_GET['date']) ? $_GET['date'] : null;
+
+$formattedDate = null;
+$selectedDate = null;
+
+if ($date) {
+    // Assume MM-DD-YYYY format explicitly
+    $parts = explode('-', $date);
+    if (count($parts) === 3) {
+        list($month, $day, $year) = $parts;
+        // Validate numbers
+        if (checkdate((int)$month, (int)$day, (int)$year)) {
+            // Build timestamp
+            $timestamp = mktime(0, 0, 0, (int)$month, (int)$day, (int)$year);
+            $formattedDate = date("F d, Y", $timestamp);
+            $selectedDate = date("Y-m-d", $timestamp);
+        } else {
+            echo "<p style='color:red;'>Invalid date components: " . htmlspecialchars($date) . "</p>";
+        }
+    } else {
+        echo "<p style='color:red;'>Invalid date format received: " . htmlspecialchars($date) . "</p>";
+    }
+}
+
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Date & Time | LebKhim's Clinic</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Details & Time Slot | LebKhim's Clinic</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
+  <style>
+    /* Your existing styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
 
-        nav {
-            width: 100%;
-            background-color: #333;
-            padding: 12px 30px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 10;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-        }
+    nav {
+      width: 100%;
+      background-color: #333;
+      padding: 12px 30px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
 
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin: 0 15px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin: 0 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
 
-        nav a:hover {
-            color: #e74c3c;
-        }
+    nav a:hover {
+      color: #e74c3c;
+    }
 
-        .container {
-            margin-top: 100px;
-            width: 96%;
-            max-width: 580px;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            box-sizing: border-box;
-        }
+    .container {
+      margin-top: 100px;
+      width: 96%;
+      max-width: 580px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      padding: 40px;
+      box-sizing: border-box;
+      text-align: center;
+      animation: fadeUp 0.6s ease-out;
+    }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+    .selected-date {
+      font-size: 1.25rem;
+      color: #28a745;
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
 
-        .form-group label {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-            display: block;
-            color: #333;
-        }
+    .timeslot-button {
+      display: inline-block;
+      background-color: #28a745;
+      color: white;
+      padding: 12px 30px;
+      margin: 5px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+    }
 
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s;
-        }
+    .timeslot-button:hover {
+      background-color: #333;
+    }
 
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            border-color: #28a745;
-        }
+    .timeslot-button:active {
+      background-color: #5a5a5a;
+      transform: scale(0.97);
+    }
 
-        .icon {
-            font-size: 18px;
-            margin-right: 8px;
-        }
+    .time-slots {
+      margin-bottom: 30px;
+    }
 
-        .available-times {
-            margin-top: 15px;
-            opacity: 0;
-            transition: opacity 0.6s ease-in-out;
-        }
+    .timeslot-selected {
+      background-color: #6c757d !important;
+      color: white;
+      animation: pulse 0.3s ease;
+    }
 
-        .available-times.show {
-            opacity: 1;
-        }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
 
-        .submit-btn {
-            padding: 12px 30px;
-            background-color: #28a745;
-            color: white;
-            font-size: 1rem;
-            border-radius: 6px;
-            border: none;
-            transition: background 0.3s ease;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+    .submit-btn {
+      padding: 12px 30px;
+      background-color: #28a745;
+      color: white;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      transition: background 0.3s ease;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
 
-        .submit-btn:hover {
-            background-color: #218838;
-        }
+    .submit-btn:hover {
+      background-color: #218838;
+    }
 
-        .details-container h3 {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            color: #333;
-            text-align: center;
-        }
+    .back-btn {
+      margin-top: 20px;
+      background-color: #6c757d;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      display: inline-block;
+    }
 
-        .details-container textarea {
-            resize: vertical;
-        }
+    .back-btn:hover {
+      background-color: #5a6268;
+    }
 
-        @media (max-width: 768px) {
-            .container {
-                width: 90%;
-                padding: 20px;
-            }
-        }
-    </style>
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
 
 <nav>
-    <a href="home.php">Home</a>
-    <a href="index.php">Book Appointment</a>
+  <a href="home.php">Home</a>
+  <a href="months.php">Book Appointment</a>
 </nav>
 
 <div class="container">
-        <h3 id="selectedDate">BOOK AN APPOINTMENT</h3>
+  <?php if ($formattedDate): ?>
+    <div class="selected-date">Book for date: <?= htmlspecialchars($formattedDate) ?></div>
+  <?php else: ?>
+    <div class="selected-date" style="color: #dc3545;">Please select a date first.</div>
+  <?php endif; ?>
 
-    <form action="submit_appointment.php" method="POST" id="appointmentForm" onsubmit="return validateForm()">
-        <!-- Date Picker -->
-        <div class="form-group">
-            <label for="calendar"><i class="fas fa-calendar-day icon"></i>Select Date</label>
-            <input type="date" id="calendar" onchange="updateDateTime()" min="">
-        </div>
+  <a href="months.php" class="back-btn">← Change Date</a>
 
-        <!-- Full Name -->
-        <div class="form-group">
-            <label for="name"><i class="fas fa-user icon"></i>Full Name</label>
-            <input type="text" id="name" name="full_name" placeholder="Your name">
-        </div>
+  <div class="time-slots">
+    <h4>Select a Time Slot</h4>
+    <button type="button" class="timeslot-button" data-time="09:00:00">09:00 AM</button>
+    <button type="button" class="timeslot-button" data-time="10:00:00">10:00 AM</button>
+    <button type="button" class="timeslot-button" data-time="11:00:00">11:00 AM</button>
+    <button type="button" class="timeslot-button" data-time="13:00:00">01:00 PM</button>
+    <button type="button" class="timeslot-button" data-time="14:00:00">02:00 PM</button>
+    <button type="button" class="timeslot-button" data-time="15:00:00">03:00 PM</button>
+  </div>
 
-        <!-- Email Address -->
-        <div class="form-group">
-            <label for="email"><i class="fas fa-envelope icon"></i>Email Address</label>
-            <input type="email" id="email" name="email" placeholder="Your email">
-        </div>
-
-        <!-- Reason for Appointment -->
-        <div class="form-group">
-            <label for="reason"><i class="fas fa-stethoscope icon"></i>Reason for Appointment</label>
-            <textarea id="reason" name="reason" rows="3" placeholder="Describe the reason for your visit..."></textarea>
-        </div>
-
-        <!-- Hidden Date Input -->
-        <input type="hidden" id="selected_date_input" name="date">
-
-        <!-- Available Time Slots -->
-        <div class="available-times" id="availableTimes">
-            <p>Select a date to view available time slots.</p>
-        </div>
-
-        <!-- Submit Button -->
-        <button class="submit-btn" type="submit"><i class="fas fa-check-circle icon"></i>Book Appointment</button>
-    </form>
+  <!-- Form for Appointment Submission -->
+  <form action="submit_appointment.php" method="POST" id="appointmentForm" onsubmit="return validateForm()">
+    <?php if ($selectedDate): ?>
+      <input type="hidden" name="date" value="<?= htmlspecialchars($selectedDate) ?>">
+    <?php endif; ?>
+    <!-- time input will be added dynamically by JS -->
+    <button class="submit-btn" type="submit"><i class="fas fa-check-circle icon"></i> Book Appointment</button>
+  </form>
 </div>
 
 <script>
-    // Set today's date as the minimum
-    window.onload = () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('calendar').setAttribute('min', today);
-    };
+  const timeslotButtons = document.querySelectorAll('.timeslot-button');
+  let selectedTimeslot = null;
 
-    // Function to format time to 12-hour AM/PM format
-    function formatTo12Hour(time) {
-        const [hour, minute] = time.split(":").map(num => parseInt(num));
-        const suffix = hour >= 12 ? "PM" : "AM";
-        let formattedHour = hour % 12;
-        formattedHour = formattedHour ? formattedHour : 12; // Handle 12 AM/PM
-        return `${formattedHour}:${minute < 10 ? "0" + minute : minute} ${suffix}`;
+  timeslotButtons.forEach(button => {
+    button.addEventListener('click', function () {
+      timeslotButtons.forEach(btn => btn.classList.remove('timeslot-selected'));
+      this.classList.add('timeslot-selected');
+      selectedTimeslot = this.dataset.time;
+
+      let input = document.querySelector('input[name="time"]');
+      if (!input) {
+        input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "time";
+        document.getElementById("appointmentForm").appendChild(input);
+      }
+      input.value = selectedTimeslot;
+    });
+  });
+
+  function validateForm() {
+    if (!selectedTimeslot) {
+      alert('Please select a time slot before proceeding.');
+      return false;
     }
-
-    // Update Date and Time Slot Options with Fade-in Effect
-    function updateDateTime() {
-        const dateInput = document.getElementById('calendar').value;
-        const selectedDate = new Date(dateInput);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (selectedDate < today) {
-            alert('Please select a valid date.');
-            document.getElementById('calendar').value = '';
-            document.getElementById('selectedDate').textContent = 'Select a date from the calendar';
-            document.getElementById('availableTimes').innerHTML = '<p>Select a date to view available time slots.</p>';
-            document.getElementById('availableTimes').classList.remove('show');
-            return;
-        }
-
-        const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const months = ["January", "February", "March", "April", "May", "June", "July",
-                        "August", "September", "October", "November", "December"];
-
-        const day = weekdays[selectedDate.getDay()];
-        const month = months[selectedDate.getMonth()];
-        const date = selectedDate.getDate();
-        const year = selectedDate.getFullYear();
-
-        const formattedDate = `${day}, ${month} ${date}, ${year}`;
-        document.getElementById('selectedDate').textContent = formattedDate;
-        document.getElementById('selected_date_input').value = dateInput;
-
-        // Fetch available times via AJAX
-        fetch(`get_available_times.php?date=${dateInput}`)
-            .then(response => response.json())
-            .then(times => {
-                let timesHtml = '<label for="time"><i class="fas fa-clock icon"></i>Select Time:</label><select id="time" name="time">';
-                if (times.length === 0) {
-                    timesHtml += '<option disabled>No available slots</option>';
-                } else {
-                    times.forEach(time => {
-                        const formattedTime = formatTo12Hour(time); // Convert time to 12-hour format
-                        timesHtml += `<option value="${time}">${formattedTime}</option>`;
-                    });
-                }
-                timesHtml += '</select>';
-
-                const availableTimesDiv = document.getElementById('availableTimes');
-                availableTimesDiv.innerHTML = timesHtml;
-                setTimeout(() => {
-                    availableTimesDiv.classList.add('show');
-                }, 10);
-            })
-            .catch(error => {
-                console.error('Error fetching availability:', error);
-            });
-    }
-
-    // Form Validation
-    function validateForm() {
-        const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const reason = document.getElementById('reason').value.trim();
-        const date = document.getElementById('selected_date_input').value;
-        const time = document.getElementById('time')?.value;
-
-        if (!name || !email || !reason || !date || !time) {
-            alert('Please fill in all fields before submitting.');
-            return false;
-        }
-
-        // Email format validation
-        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-        if (!emailRegex.test(email)) {
-            alert('Please enter a valid email address.');
-            return false;
-        }
-
-        return true;
-    }
+    return true;
+  }
 </script>
 
 </body>

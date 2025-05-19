@@ -1,9 +1,18 @@
 <?php
-// Start the session
 session_start();
 
-// Check if the user is logged in and is an admin
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// Check admin role
 $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
+
+// Extract first name from full name
+$fullName = $_SESSION['full_name'] ?? '';
+$firstName = explode(' ', $fullName)[0];
 ?>
 
 <!DOCTYPE html>
@@ -35,27 +44,36 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
         nav {
             width: 100%;
             background-color: #333;
-            padding: 12px 30px;
+            padding: 12px 15px;
             position: fixed;
             top: 0;
             left: 0;
             z-index: 10;
             display: flex;
-            justify-content: flex-start;
+            justify-content: space-between;
             align-items: center;
         }
 
-        nav a {
+        .nav-left,
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-left a,
+        .nav-right a {
             color: white;
             text-decoration: none;
-            margin: 0 15px;
+            margin: 0 10px;
             font-size: 1rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
+            white-space: nowrap;
         }
 
-        nav a:hover {
+        .nav-left a:hover,
+        .nav-right a:hover {
             color: #e74c3c;
         }
 
@@ -95,19 +113,20 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
             justify-content: center;
             align-items: center;
             gap: 20px;
-            margin-bottom: 40px; /* Add spacing between icons and button */
+            margin-bottom: 40px;
             opacity: 0;
             transform: translateY(20px);
             animation: fadeInUp 1s 0.3s forwards;
         }
 
-        .icon-container a {
+        .icon-container span {
             color: #333;
             font-size: 2rem;
             transition: color 0.3s ease, transform 0.3s ease;
+            cursor: default;
         }
 
-        .icon-container a:hover {
+        .icon-container span:hover {
             color: #e74c3c;
             transform: scale(1.2);
         }
@@ -122,7 +141,7 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: background 0.3s ease, transform 0.3s ease;
-            margin-top: 30px; /* Adjusted lower placement */
+            margin-top: 30px;
         }
 
         .button:hover {
@@ -179,75 +198,70 @@ $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
         .service-card:nth-child(3) { animation-delay: 0.4s; }
         .service-card:nth-child(4) { animation-delay: 0.5s; }
 
-    </style>
+        </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav>
+
+<!-- Navigation Bar -->
+<nav>
+    <div class="nav-left">
         <a href="home.php">Home</a>
-        <a href="index.php">Book Appointment</a>
+        <a href="months.php">Book Appointment</a>
         <?php if ($isAdmin): ?>
             <a href="appointments.php">Appointments</a>
         <?php endif; ?>
-    </nav>
+    </div>
+    <div class="nav-right">
+        <a href="logout.php">Logout</a>
+    </div>
+</nav>
 
-    <!-- Main Content -->
-    <div class="container">
-        <img src="image/download1.png" alt="LebKhim's Clinic Logo" class="logo">
-        <h1>Welcome to LebKhim's Clinic</h1>
-        <p>Your health is our priority. Schedule your appointment today for a healthier tomorrow.</p>
+<!-- Main Content -->
+<div class="container">
+    <img src="image/download1.png" alt="LebKhim's Clinic Logo" class="logo">
+    <h1>Welcome to LebKhim's Clinic</h1>
+    <?php
+$userName = isset($_SESSION['user_name']) ? htmlspecialchars($_SESSION['user_name']) : 'Guest';
+?>
+<h2>Hello,  <?php echo $userName; ?>👋!</h2>
 
-        <div class="icon-container">
-            <a href="index.php" title="Book an Appointment"><i class="fas fa-calendar-alt"></i></a>
-            <a href="contact.php" title="Contact Us"><i class="fas fa-phone-alt"></i></a>
-            <a href="about.php" title="About Us"><i class="fas fa-info-circle"></i></a>
-        </div>
+    <p>Your health is our priority. Schedule your appointment today for a healthier tomorrow.</p>
 
-        <a href="index.php" class="button" style="margin-top: 120px;">📅 Book Appointment</a>
+    <div class="icon-container">
+        <span title="Book an Appointment"><i class="fas fa-calendar-alt"></i></span>
+        <span title="Contact Us"><i class="fas fa-phone-alt"></i></span>
+        <span title="About Us"><i class="fas fa-info-circle"></i></span>
     </div>
 
-    <!-- Services Section -->
-    <div class="services-section">
-        <h2 style="font-size: 2rem; margin-bottom: 40px; color: #333;">Services We Offer</h2>
-        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 30px;">
-            <div class="service-card">
-                <i class="fas fa-user-md" style="font-size: 2rem; color: #e74c3c;"></i>
-                <h3 style="font-size: 1.2rem; margin: 15px 0 10px;">General Check-up</h3>
-                <p style="font-size: 0.95rem; color: #555;">Routine health exams for early detection and peace of mind.</p>
-            </div>
-            <div class="service-card">
-                <i class="fas fa-baby" style="font-size: 2rem; color: #e74c3c;"></i>
-                <h3 style="font-size: 1.2rem; margin: 15px 0 10px;">Pediatric Care</h3>
-                <p style="font-size: 0.95rem; color: #555;">Compassionate care tailored for your little ones’ health.</p>
-            </div>
-            <div class="service-card">
-                <i class="fas fa-syringe" style="font-size: 2rem; color: #e74c3c;"></i>
-                <h3 style="font-size: 1.2rem; margin: 15px 0 10px;">Vaccinations</h3>
-                <p style="font-size: 0.95rem; color: #555;">Protect yourself and your family with up-to-date immunizations.</p>
-            </div>
-            <div class="service-card">
-                <i class="fas fa-notes-medical" style="font-size: 2rem; color: #e74c3c;"></i>
-                <h3 style="font-size: 1.2rem; margin: 15px 0 10px;">Health Consultations</h3>
-                <p style="font-size: 0.95rem; color: #555;">One-on-one discussions to guide your wellness journey.</p>
-            </div>
+    <a href="months.php" class="button" style="margin-top: 120px;">📅 Book Appointment</a>
+</div>
+
+<!-- Services Section -->
+<div class="services-section">
+    <h2 style="font-size: 2rem; margin-bottom: 40px; color: #333;">Services We Offer</h2>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 30px;">
+        <div class="service-card">
+            <i class="fas fa-user-md" style="font-size: 2rem; color: #e74c3c;"></i>
+            <h3 style="font-size: 1.2rem; margin: 15px 0 10px;">General Check-up</h3>
+            <p style="font-size: 0.95rem; color: #555;">Routine health exams for early detection and peace of mind.</p>
+        </div>
+        <div class="service-card">
+            <i class="fas fa-baby" style="font-size: 2rem; color: #e74c3c;"></i>
+            <h3 style="font-size: 1.2rem; margin: 15px 0 10px;">Pediatric Care</h3>
+            <p style="font-size: 0.95rem; color: #555;">Compassionate care tailored for your little ones’ health.</p>
+        </div>
+        <div class="service-card">
+            <i class="fas fa-syringe" style="font-size: 2rem; color: #e74c3c;"></i>
+            <h3 style="font-size: 1.2rem; margin: 15px 0 10px;">Vaccinations</h3>
+            <p style="font-size: 0.95rem; color: #555;">Protect yourself and your family with up-to-date immunizations.</p>
+        </div>
+        <div class="service-card">
+            <i class="fas fa-notes-medical" style="font-size: 2rem; color: #e74c3c;"></i>
+            <h3 style="font-size: 1.2rem; margin: 15px 0 10px;">Health Consultations</h3>
+            <p style="font-size: 0.95rem; color: #555;">One-on-one discussions to guide your wellness journey.</p>
         </div>
     </div>
+</div>
 
-    <script>
-        // Optionally, you can use JavaScript to trigger animations dynamically, like adding classes when scrolled
-        window.addEventListener('scroll', () => {
-            const sections = document.querySelectorAll('.container, .services-section, .service-card');
-            sections.forEach(section => {
-                if (isElementInView(section)) {
-                    section.classList.add('animated');
-                }
-            });
-        });
-
-        function isElementInView(element) {
-            const rect = element.getBoundingClientRect();
-            return rect.top >= 0 && rect.bottom <= window.innerHeight;
-        }
-    </script>
 </body>
 </html>

@@ -26,12 +26,13 @@
 
         a {
             font-size: 1rem;
-            color: #333;
+            color: white;
             text-decoration: none;
             background-color: #e74c3c;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 12px 28px;
+            border-radius: 8px;
             transition: background-color 0.3s ease;
+            font-weight: 600;
         }
 
         a:hover {
@@ -43,7 +44,7 @@
 
     <div>
         <h2>Thank you! Your appointment has been successfully booked.</h2>
-        <a href="index.php">Go Back</a>
+        <a href="home.php">Go to Home</a>
     </div>
 
 </body>

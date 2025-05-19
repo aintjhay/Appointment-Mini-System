@@ -1,33 +1,34 @@
 <?php
-// Replace with your database connection
-$host = 'localhost';
-$db = 'sched_db';
-$user = 'root';
-$pass = '';
+session_start();
 
-$conn = new mysqli($host, $user, $pass, $db);
+// Enable error reporting for MySQLi
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+// DB connection
+$conn = new mysqli("localhost", "root", "", "sched_db");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Get logged-in user ID from session
+$user_id = $_SESSION['user_id'] ?? null;
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $full_name = $_POST['full_name'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $reason = $_POST['reason'] ?? '';
     $date = $_POST['date'] ?? '';
     $time = $_POST['time'] ?? '';
 
-    if ($full_name && $email && $reason && $date && $time) {
-        $stmt = $conn->prepare("INSERT INTO appointments (full_name, email, reason, date, time) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $full_name, $email, $reason, $date, $time);
+    if ($user_id && $date && $time) {
+        $stmt = $conn->prepare("INSERT INTO appointments (user_id, `date`, `time`) VALUES (?, ?, ?)");
+        $stmt->bind_param("iss", $user_id, $date, $time);
         $stmt->execute();
         $stmt->close();
 
-        header("Location: success.php"); // Or show success message here
+        header("Location: success.php");
         exit();
     } else {
-        echo "Please fill in all fields.";
+        echo "Please select a date and time and ensure you're logged in.";
     }
 }
+
 $conn->close();
 ?>
